@@ -1,12 +1,12 @@
-let x, y;          
-let velX = 4;      
-let velY = 3;      
+let x;
+let y;
+let velX = 4;
+let velY = 3;
 let tamano = 60;   
-
 let estadoCompleto = 0; 
 
 function setup() {
-  createCanvas(500, 500);
+  createCanvas(windowWidth, windowHeight);
   x = width / 2;
   y = height / 2;
 }
@@ -35,48 +35,45 @@ function draw() {
   textSize(12);
   text("v1.0", width/2, 85);
 
-  x += velX;
-  y += velY;
+  x = x + velX;
+  y = y + velY;
   
   if (x + tamano/2 > width || x - tamano/2 < 0) {
-    velX *= -1; 
-    cambiarIngredientes();
+    velX = velX * -1; 
+    estadoCompleto = estadoCompleto + 1;
+    if (estadoCompleto > 3) {
+      estadoCompleto = 0;
+    }
   }
   
   if (y + tamano/2 > height || y - tamano/2 < 110) {
-    velY *= -1; 
-    cambiarIngredientes();
+    velY = velY * -1; 
+    estadoCompleto = estadoCompleto + 1;
+    if (estadoCompleto > 3) {
+      estadoCompleto = 0;
+    }
   }
   
-  push();
-  translate(x, y); 
-  
   fill(210, 150, 90); 
-  ellipse(0, 0, tamano, tamano * 0.6); 
+  ellipse(x, y, tamano, tamano * 0.6); 
   
   if (estadoCompleto >= 1) {
     fill(190, 70, 70); 
-    rect(-tamano*0.4, -5, tamano * 0.8, 10, 5);
+    rect(x, y - 5, tamano * 0.8, 10, 5);
   }
   
   if (estadoCompleto >= 2) {
     fill(255, 50, 50); 
-    rect(-15, -8, 8, 6);
-    rect(5, -4, 8, 6);
+    rect(x - 11, y - 6, 8, 6);
+    rect(x + 9, y - 2, 8, 6);
   }
   
   if (estadoCompleto === 3) {
     fill(100, 180, 70); 
-    ellipse(0, -2, tamano * 0.6, 6);
+    ellipse(x, y - 2, tamano * 0.6, 6);
   }
-  
-  pop();
 }
 
-function cambiarIngredientes() {
-  estadoCompleto++; 
-  
-  if (estadoCompleto > 3) {
-    estadoCompleto = 0;
-  }
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
