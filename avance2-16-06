@@ -1,10 +1,10 @@
-let x, y;          
-let velX = 3.5;    
-let velY = 2.5;    
-let anchoCompleto = 70;
-let altoCompleto = 32;
 
-let estadoCompleto = 0; 
+let x;
+let y;
+let velX = 4;
+let velY = 3;
+
+let estadoCompleto = 0;
 
 function setup() {
   createCanvas(600, 600);
@@ -13,134 +13,128 @@ function setup() {
 }
 
 function draw() {
-  background(253, 250, 238); 
-  stroke(230, 225, 205);     
+  background(253, 250, 238);
+  
+  stroke(230, 225, 205);
   strokeWeight(1);
-  for (let i = 0; i < width; i += 20) {
-    line(i, 0, i, height);
-    line(0, i, width, i);
+  for (let i = 0; i < 600; i += 20) {
+    line(i, 0, i, 600);
+    line(0, i, 600, i);
   }
   
   stroke(240, 160, 160, 150);
-  line(40, 0, 40, height);
+  line(40, 0, 40, 600);
 
   rectMode(CENTER);
   textAlign(CENTER, CENTER);
   
-  dibujarBotonConSombra(width / 2, 45, 180, 35, color(235, 77, 75));
+  noStroke();
+  fill(40, 40, 40, 40);
+  rect(width / 2 + 3, 45 + 4, 180, 35, 8);
+  stroke(40);
+  strokeWeight(2);
+  fill(235, 77, 75);
+  rect(width / 2, 45, 180, 35, 8);
+  
   fill(255);
   noStroke();
   textSize(18);
-  textStyle(BOLD);
   text("! TOCOMPLE !", width / 2, 45);
   
-  textStyle(NORMAL);
-  dibujarBotonConSombra(width / 2, 85, 230, 35, color(240, 165, 0));
+  noStroke();
+  fill(40, 40, 40, 40);
+  rect(width / 2 + 3, 85 + 4, 230, 35, 8);
+  stroke(40);
+  strokeWeight(2);
+  fill(240, 165, 0);
+  rect(width / 2, 85, 230, 35, 8);
+  
   fill(255);
   noStroke();
   textSize(15);
-  textStyle(BOLD);
   text("+ SIMULATOR +", width / 2, 85);
   
-  dibujarBotonConSombra(width / 2, 123, 100, 25, color(106, 176, 76));
+  noStroke();
+  fill(40, 40, 40, 40);
+  rect(width / 2 + 3, 123 + 4, 110, 25, 8);
+  stroke(40);
+  strokeWeight(2);
+  fill(106, 176, 76);
+  rect(width / 2, 123, 110, 25, 8);
+  
   fill(255);
   noStroke();
   textSize(11);
-  let nombresEstados = ["SÓLO PAN", "+ SACHICHA", "+ TOMATE", "¡COMPLETO!"];
-  text(nombresEstados[estadoCompleto], width / 2, 123);
-
-  x += velX;
-  y += velY;
   
-  if (x + anchoCompleto/2 > width || x - anchoCompleto/2 < 0) {
-    velX *= -1;
-    avanzarEstado();
-  }
-  
-  if (y + altoCompleto/2 > height || y - altoCompleto/2 < 160) {
-    velY *= -1;
-    avanzarEstado();
+  if (estadoCompleto == 0) {
+    text("SÓLO PAN", width / 2, 123);
+  } else if (estadoCompleto == 1) {
+    text("+ SALCHICHA", width / 2, 123);
+  } else if (estadoCompleto == 2) {
+    text("+ TOMATE", width / 2, 123);
+  } else if (estadoCompleto == 3) {
+    text("¡COMPLETO!", width / 2, 123);
   }
 
-  push();
-  translate(x, y);
+  x = x + velX;
+  y = y + velY;
   
-  let angulo = atan2(velY, velX) * 0.2;
-  rotate(angulo);
+  if (x + 35 > 600 || x - 35 < 0) {
+    velX = velX * -1;
+    estadoCompleto = estadoCompleto + 1;
+    if (estadoCompleto > 3) {
+      estadoCompleto = 0;
+    }
+  }
+  
+  if (y + 16 > 600 || y - 16 < 160) {
+    velY = velY * -1;
+    estadoCompleto = estadoCompleto + 1;
+    if (estadoCompleto > 3) {
+      estadoCompleto = 0;
+    }
+  }
 
-  stroke(139, 82, 33);
+  rectMode(CENTER);
+  stroke(40);
   strokeWeight(2);
-  fill(222, 160, 87); 
-  rect(0, 0, anchoCompleto, altoCompleto, 15); 
-  
-  noStroke();
-  fill(194, 131, 60);
-  rect(0, 0, anchoCompleto - 10, altoCompleto * 0.5, 10);
+  fill(222, 160, 87);
+  rect(x, y, 70, 32, 15);
 
   if (estadoCompleto >= 1) {
-    stroke(120, 40, 40);
-    strokeWeight(1.5);
-    fill(184, 61, 61); 
-    rect(0, 0, anchoCompleto + 6, altoCompleto * 0.35, 8);
-    
-    stroke(140, 45, 45);
-    for(let i = -anchoCompleto/2 + 10; i < anchoCompleto/2; i += 15) {
-      line(i, -3, i + 4, 3);
-    }
+    stroke(40);
+    fill(184, 61, 61);
+    rect(x, y, 76, 12, 5);
   }
 
   if (estadoCompleto >= 2) {
     noStroke();
-    fill(235, 47, 6); 
-    rect(-20, -3, 10, 8, 2);
-    rect(-5, -5, 12, 7, 2);
-    rect(12, -4, 9, 8, 2);
-    rect(25, -2, 11, 7, 2);
+    fill(235, 47, 6);
+    rect(x - 20, y - 2, 10, 8, 2);
+    rect(x - 5, y - 4, 12, 7, 2);
+    rect(x + 10, y - 3, 9, 8, 2);
+    rect(x + 22, y - 1, 11, 7, 2);
   }
 
-  if (estadoCompleto === 3) {
-    stroke(60, 120, 40);
+  if (estadoCompleto == 3) {
+    stroke(40);
     strokeWeight(1);
-    fill(120, 200, 80); 
-    
-    beginShape();
-    vertex(-anchoCompleto/2, 2);
-    for (let i = -anchoCompleto/2; i <= anchoCompleto/2; i += 10) {
-      let offsetY = sin(i * 0.2) * 4 - 3; 
-      vertex(i, offsetY);
-    }
-    vertex(anchoCompleto/2, 2);
-    endShape(CLOSE);
+    fill(120, 200, 80);
+    ellipse(x - 20, y - 4, 15, 10);
+    ellipse(x - 5, y - 5, 16, 11);
+    ellipse(x + 10, y - 4, 14, 10);
+    ellipse(x + 22, y - 3, 15, 11);
     
     stroke(255, 253, 230);
-    strokeWeight(2.5);
+    strokeWeight(3);
     noFill();
+    
     beginShape();
-    for (let i = -anchoCompleto/2 + 5; i <= anchoCompleto/2 - 5; i += 8) {
-      let mayoY = cos(i * 0.5) * 3 - 2;
-      vertex(i, mayoY);
-    }
+    vertex(x - 30, y - 2);
+    vertex(x - 15, y - 6);
+    vertex(x, y - 2);
+    vertex(x + 15, y - 6);
+    vertex(x + 30, y - 2);
     endShape();
   }
-
-  pop();
-}
-
-function avanzarEstado() {
-  estadoCompleto++;
-  if (estadoCompleto > 3) {
-    estadoCompleto = 0; 
-  }
-}
-
-function dibujarBotonConSombra(cx, cy, w, h, col) {
-  rectMode(CENTER);
-  noStroke();
-  fill(40, 40, 40, 40);
-  rect(cx + 3, cy + 4, w, h, 8);
-  
-  stroke(40);
-  strokeWeight(2.5);
-  fill(col);
-  rect(cx, cy, w, h, 8);
 }
