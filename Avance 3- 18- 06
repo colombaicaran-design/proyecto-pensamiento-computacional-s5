@@ -1,0 +1,186 @@
+let escena = 0; 
+let x, y, velX = 4, velY = 3;    
+let anchoComp = 100, altoComp = 40;
+let estadoSimulador = 0; 
+let pedidoCliente = "Completo Dinámico"; 
+
+let barraPrecision = 0;
+let barraVel = 4;
+let ingredienteActual = 1; 
+let precisionIngredientes = []; 
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  x = width / 2; 
+  y = height / 2;
+}
+
+function draw() {
+  background(253, 250, 238); 
+  dibujarCuadricula();
+
+  if (escena === 0) {
+    dibujarEscena0();
+  } else if (escena === 1) {
+    dibujarEscena1();
+  } else if (escena === 2) {
+    dibujarEscena2();
+  }
+}
+
+// Estructura base de la interfaz gráfica (Cuadrícula de fondo)
+function dibujarCuadricula() {
+  stroke(230, 225, 205); 
+  strokeWeight(1);
+  for (let i = 0; i < width; i += 20) { line(i, 0, i, height); }
+  for (let j = 0; j < height; j += 20) { line(0, j, width, j); }
+  stroke(240, 160, 160, 150); 
+  line(40, 0, 40, height);
+}
+
+// ESCENA 0: Pantalla de inicio con animación del completo rebotando
+function dibujarEscena0() {
+  rectMode(CENTER); textAlign(CENTER, CENTER);
+  
+  noStroke(); fill(40, 40, 40, 40); rect(width / 2 + 3, height * 0.1 + 4, 180, 35, 8);
+  stroke(40); strokeWeight(2); fill(235, 77, 75); rect(width / 2, height * 0.1, 180, 35, 8);
+  fill(255); noStroke(); textStyle(BOLD); textSize(17); text("TOCOMPLE", width / 2, height * 0.1);
+  
+  noStroke(); fill(40, 40, 40, 40); rect(width / 2 + 3, height * 0.1 + 44, 230, 35, 8);
+  stroke(40); strokeWeight(2); fill(240, 165, 0); rect(width / 2, height * 0.1 + 40, 230, 35, 8);
+  fill(255); noStroke(); textSize(14); text("SIMULATOR CHILE", width / 2, height * 0.1 + 40);
+
+  // Física de rebote del completo en el menú
+  x = x + velX; 
+  y = y + velY;
+  if (x + anchoComp/2 > width || x - anchoComp/2 < 0) { 
+    velX = velX * -1; 
+    estadoSimulador = estadoSimulador + 1;
+    if (estadoSimulador > 3) { estadoSimulador = 0; }
+  }
+  if (y + altoComp/2 > height * 0.75 || y - altoComp/2 < height * 0.25) { 
+    velY = velY * -1; 
+    estadoSimulador = estadoSimulador + 1;
+    if (estadoSimulador > 3) { estadoSimulador = 0; }
+  }
+
+  // Dibujo del completo animado
+  stroke(40); strokeWeight(2.5); fill(222, 160, 87); rect(x, y, anchoComp, altoComp, 18);
+  noStroke(); fill(190, 130, 65); rect(x, y, anchoComp - 10, 14, 5);
+
+  if (estadoSimulador >= 1) { 
+    stroke(40); strokeWeight(2); fill(185, 65, 65); rect(x, y, anchoComp + 10, 15, 8); 
+  }
+  if (estadoSimulador >= 2) {
+    noStroke(); fill(235, 47, 6);
+    rect(x - 30, y - 2, 14, 12, 3); rect(x - 10, y + 1, 12, 13, 3); rect(x + 10, y - 3, 13, 11, 3); rect(x + 30, y + 2, 12, 12, 3);
+  }
+  if (estadoSimulador == 3) {
+    stroke(40); strokeWeight(1.5); fill(105, 185, 75); rect(x, y, anchoComp - 8, 12, 6);
+  }
+  
+  // Botón Jugar
+  noStroke(); fill(40, 40, 40, 40); rect(width / 2 + 3, height - 80 + 4, 280, 45, 8);
+  stroke(40); strokeWeight(2); fill(46, 204, 113); rect(width / 2, height - 80, 280, 45, 8);
+  fill(255); noStroke(); textSize(14); text("¡ENTRAR A LA COMPLETERÍA!", width / 2, height - 80);
+}
+
+// ESCENA 1: Contexto histórico y pedido del cliente
+function dibujarEscena1() {
+  rectMode(CORNER); textAlign(CENTER, CENTER);
+  fill(235, 77, 75); rect(0, 0, width, 40);
+  fill(255); 
+  for(let i = 0; i < width; i += 40) rect(i, 40, 20, 15);
+  fill(255); noStroke(); textStyle(BOLD); textSize(15); text("QUICK LUNCH BAHAMONDES - AÑO 1920", width/2, 22);
+
+  // Avatar del Cliente
+  stroke(40); strokeWeight(3); fill(52, 152, 219); ellipse(width / 2, height * 0.35, 100, 100);
+  fill(40); ellipse(width / 2 - 15, height * 0.35 - 10, 8, 8); ellipse(width / 2 + 15, height * 0.35 - 10, 8, 8); 
+  fill(255); arc(width / 2, height * 0.35 + 15, 40, 20, 0, PI); 
+
+  // Caja de diálogo
+  rectMode(CENTER);
+  noStroke(); fill(40, 40, 40, 40); rect(width / 2 + 3, height * 0.65 + 4, width * 0.8 > 480 ? 480 : width * 0.8, 120, 8);
+  stroke(40); strokeWeight(2.5); fill(255); rect(width / 2, height * 0.65, width * 0.8 > 480 ? 480 : width * 0.8, 120, 8);
+  fill(40); noStroke(); textStyle(NORMAL); textSize(14);
+  text("Eduardo Bahamondes revolucionó el Portal Fernández Concha agregando ingredientes locales al Hot Dog gringo. ¡Y los clientes se volvieron locos!", width/2, height * 0.65 - 20, width * 0.7 > 440 ? 440 : width * 0.7);
+  textStyle(BOLD); fill(230, 76, 60);
+  text("CLIENTE: \"¡Hola! Quiero un " + pedidoCliente.toUpperCase() + " con vienesa, tomate, palta y un buen zigzag de mayo!\"", width/2, height * 0.65 + 30, width * 0.7 > 440 ? 440 : width * 0.7);
+
+  // Botón Siguiente
+  noStroke(); fill(40, 40, 40, 40); rect(width / 2 + 3, height - 80 + 4, 220, 45, 8);
+  stroke(40); strokeWeight(2.5); fill(240, 165, 0); rect(width / 2, height - 80, 220, 45, 8);
+  fill(255); noStroke(); textSize(14); text("¡IR A LA COCINA! →", width / 2, height - 80);
+}
+
+// ESCENA 2: Mecánica principal de juego (Estación de Armado)
+function dibujarEscena2() {
+  rectMode(CENTER); textAlign(CENTER, CENTER); textStyle(BOLD);
+  
+  if (ingredienteActual <= 3) {
+    textSize(16); fill(40); noStroke(); text("ESTACIÓN DE ARMADO: COLOCA LOS INGREDIENTES", width/2, 35);
+    textSize(13); fill(231, 76, 60);
+    if (ingredienteActual === 1) { text("PRESIONA 'ESPACIO' CUANDO EL MEDIDOR ESTÉ AL CENTRO: LA VIENESA", width/2, 65); }
+    if (ingredienteActual === 2) { text("PRESIONA 'ESPACIO' CUANDO EL MEDIDOR ESTÉ AL CENTRO: EL TOMATE", width/2, 65); }
+    if (ingredienteActual === 3) { text("PRESIONA 'ESPACIO' CUANDO EL MEDIDOR ESTÉ AL CENTRO: LA PALTA", width/2, 65); }
+
+    // El plato de fondo
+    fill(240); stroke(200); strokeWeight(2); ellipse(width/2, height * 0.4, 240, 120);
+    
+    let cx = width/2;
+    let cy = height * 0.4 - 10;
+    
+    // Dibujo dinámico según la capa que vayas poniendo
+    stroke(40); strokeWeight(2.5); fill(222, 160, 87); rect(cx, cy, anchoComp, altoComp, 18);
+    noStroke(); fill(190, 130, 65); rect(cx, cy, anchoComp - 10, 14, 5);
+
+    if (ingredienteActual > 1) { 
+      stroke(40); strokeWeight(2); fill(185, 65, 65); rect(cx, cy, anchoComp + 10, 15, 8); 
+    }
+    if (ingredienteActual > 2) {
+      noStroke(); fill(235, 47, 6);
+      rect(cx - 30, cy - 2, 14, 12, 3); rect(cx - 10, cy + 1, 12, 13, 3); rect(cx + 10, cy - 3, 13, 11, 3); rect(cx + 30, cy + 2, 12, 12, 3);
+    }
+
+    // Lógica del Medidor de Precisión (Barra que se mueve sola)
+    barraPrecision = barraPrecision + barraVel;
+    if (barraPrecision > 100 || barraPrecision < 0) { barraVel = barraVel * -1; }
+
+    // Dibujo de la barra de precisión
+    rectMode(CORNER); stroke(40); fill(220); rect(width/2 - 150, height * 0.7, 300, 25, 5); 
+    noStroke(); fill(46, 204, 113); rect(width/2 - 30, height * 0.7, 60, 25); 
+    fill(231, 76, 60); rect((width/2 - 150) + (barraPrecision * 2.8), height * 0.7 - 5, 20, 35, 3); 
+    
+    rectMode(CENTER); fill(120); textStyle(ITALIC); textSize(12); text("[Golpea la Barra Espaciadora]", width/2, height * 0.7 + 60);
+  } else {
+    // Techo o final temporal del avance 1
+    textSize(18); fill(40); noStroke(); text("¡INGREDIENTES LISTOS!", width/2, height * 0.4);
+    textSize(13); textStyle(NORMAL); fill(100);
+    text("Estación de Salsas y Evaluación final, proximamente.......", width/2, height * 0.4 + 40);
+  }
+}
+
+function keyPressed() {
+  if (escena === 2 && ingredienteActual <= 3 && key === ' ') {
+    let desvio = abs(barraPrecision - 50); 
+    let puntuacionCapa = map(desvio, 0, 50, 100, 45); 
+    precisionIngredientes.push(puntuacionCapa);
+    ingredienteActual = ingredienteActual + 1;
+  }
+}
+
+function mousePressed() {
+  if (escena === 0) {
+    if (mouseX > width/2 - 140 && mouseX < width/2 + 140 && mouseY > height - 105 && mouseY < height - 55) { 
+      escena = 1; 
+    }
+  } else if (escena === 1) {
+    if (mouseX > width/2 - 110 && mouseX < width/2 + 110 && mouseY > height - 105 && mouseY < height - 55) { 
+      escena = 2; 
+    }
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
