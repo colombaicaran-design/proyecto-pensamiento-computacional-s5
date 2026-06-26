@@ -1,0 +1,485 @@
+// VARIABLES GLOBALES Y SISTEMA =
+let escena = 0; 
+let imgInicio; 
+let imgCliente;
+let imgCompleto;
+let imgSalsa;
+let x, y, velX = 4, velY = 3;    
+let anchoComp = 140, altoComp = 55; 
+let estadoSimulador = 0; 
+
+let dineroAcumulado = 0;
+let metaDinero = 10000;
+let tipoCliente = 0; 
+let nombreCliente = "";
+let pedidoSalsa = ""; 
+let colorSalsaPedida;
+
+let tieneMesonAcero = false;
+let tieneJunior = false;
+
+let barraPrecision = 0;
+let barraVel = 1.8; 
+let ingredienteActual = 1; 
+let completoCaido = false; 
+
+let tiempoRestante = 15;
+let frameInicialEscena = 0;
+
+let puntosSalsaX = [];
+let puntosSalsaY = [];
+let nombresSalsaDibujada = []; 
+let trazoContinuo = []; 
+let colorActualSalsa;
+let tipoSalsaActual = "Mayo"; 
+
+let puntajeFinal = 0;
+let propinaFinal = 0;
+let comentarioCliente = "";
+
+// === CARGA DE ARCHIVOS (IMÁGENES) ========
+function preload() {
+  imgCliente = loadImage('ctmctm.png');
+  imgCompleto = loadImage('completo.png');
+  imgSalsa = loadImage('salsa.png');
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  x = width / 2; 
+  y = height / 2;
+  velX = 4;
+  velY = 3;
+  colorActualSalsa = color(255, 253, 220); 
+  seleccionarNuevoCliente();
+}
+
+function draw() {
+  background(255); 
+
+  if (escena === 0) dibujarEscena0();
+  else if (escena === 1) dibujarEscena1();
+  else if (escena === 2) { manejarTimer(); dibujarEscena2(); }
+  else if (escena === 3) { manejarTimer(); dibujarEscena3(); }
+  else if (escena === 4) dibujarEscena4();
+  else if (escena === 5) dibujarEscenaGameOver();
+
+  if (escena > 0 && escena < 5) {
+    dibujarInterfazEconomica();
+  }
+}
+
+function seleccionarNuevoCliente() {
+  tipoCliente = int(random(0, 3)); 
+  let salsas = ["Mayo", "Ketchup", "Mostaza"];
+  pedidoSalsa = random(salsas);
+  
+  if (pedidoSalsa === "Mayo") colorSalsaPedida = color(255, 253, 220);
+  if (pedidoSalsa === "Ketchup") colorSalsaPedida = color(214, 48, 49);
+  if (pedidoSalsa === "Mostaza") colorSalsaPedida = color(241, 196, 15);
+
+  if (tipoCliente === 0) nombreCliente = "Estudiante";
+  else if (tipoCliente === 1) nombreCliente = "Abuelita Exigente";
+  else nombreCliente = "pelao";
+  
+  barraVel = 1.8; 
+}
+
+function manejarTimer() {
+  let framesPasados = frameCount - frameInicialEscena;
+  let limite = tieneJunior ? 20 : 15; 
+  tiempoRestante = limite - int(framesPasados / 60);
+  if (tiempoRestante <= 0) {
+    tiempoRestante = 0;
+    comentarioCliente = "¡Me aburrí de esperar! Atienden como el p#$&";
+    propinaFinal = 0;
+    puntajeFinal = 0;
+    escena = 4; 
+  }
+}
+
+function dibujarInterfazEconomica() {
+  rectMode(CORNER); textAlign(LEFT, CENTER); textStyle(BOLD);
+  fill(30, 30, 30, 240); stroke(255, 255, 255, 100); strokeWeight(1);
+  rect(20, 20, 250, 45, 6);
+  fill(46, 204, 113); textSize(15); noStroke();
+  text("💰 CAJA: $" + dineroAcumulado + " / $" + metaDinero, 35, 42);
+}
+// === 1. ZONA INICIO (MENÚ PRINCIPAL) ===
+function dibujarEscena0() {
+  rectMode(CENTER); textAlign(CENTER, CENTER);
+  
+  // === ACTIVAMOS FUENTE DE COMPLETOS ===
+  textFont('Luckiest Guy'); 
+  
+  fill(200, 200, 200); textStyle(BOLD); textSize(85); 
+  text("TOCOMPLE", width / 2 + 4, height * 0.15 + 4); 
+  fill(235, 77, 75); text("TOCOMPLE", width / 2, height * 0.15);
+  
+  textSize(45); fill(243, 156, 18);
+  text("Simulator Chileno", width / 2, height * 0.25);
+  textFont('sans-serif'); textStyle(BOLD);
+
+  x += velX; 
+  y += velY;
+  
+  if (x + anchoComp/2 > width) { x = width - anchoComp/2; velX *= -1; estadoSimulador = (estadoSimulador + 1) % 4; }
+  if (x - anchoComp/2 < 0) { x = anchoComp/2; velX *= -1; estadoSimulador = (estadoSimulador + 1) % 4; }
+  
+  if (y + altoComp/2 > height - 150) { y = height - 150 - altoComp/2; velY *= -1; estadoSimulador = (estadoSimulador + 1) % 4; }
+  if (y - altoComp/2 < height * 0.3) { y = (height * 0.3) + altoComp/2; velY *= -1; estadoSimulador = (estadoSimulador + 1) % 4; }
+
+  dibujarCompleto(x, y, estadoSimulador);
+  
+  fill(46, 204, 113); stroke(40); strokeWeight(3); rect(width / 2, height - 80, 340, 55, 15);
+  fill(255); noStroke(); textSize(16); 
+  text("¡ABRIR LOCAL Y ATENDER!", width / 2, height - 80);
+}
+//  2. ZONA CLIENTE (PEDIDO) 
+function dibujarEscena1() {
+  if (imgCliente) image(imgCliente, 0, 0, width, height);
+
+  dibujarPersonaje(width / 2, height * 0.40, tipoCliente);
+  
+  rectMode(CENTER); textAlign(CENTER, CENTER);
+  fill(255); stroke(40); strokeWeight(3); rect(width / 2, height * 0.70, 520, 105, 12);
+  
+  fill(40); noStroke(); textStyle(NORMAL); textSize(15);
+  text("CLIENTE: " + nombreCliente.toUpperCase(), width/2, height * 0.65);
+  textStyle(BOLD); fill(235, 77, 75);
+  text("\"¡Buenas! Quiero un italiano... ¡Y déjalo rebalsando en " + pedidoSalsa.toUpperCase() + "!\"", width/2, height * 0.71);
+
+  fill(243, 156, 18); stroke(40); strokeWeight(2.5); rect(width / 2, height - 60, 240, 45, 8);
+  fill(255); noStroke(); textSize(15); text("¡IR A LA COCINA! ", width / 2, height - 60);
+}
+//  3. ZONA COMPLETO (ARMADO INTERACTIVO) 
+function dibujarEscena2() {
+  if (imgCompleto) image(imgCompleto, 0, 0, width, height);
+
+  rectMode(CENTER); textAlign(CENTER, CENTER);
+  
+  if (completoCaido) {
+    fill(231, 76, 60); textStyle(BOLD); textSize(36); text("💥 ¡SE CAYÓ EL COMPLETO! 💥", width/2, height * 0.4);
+    fill(40); textStyle(NORMAL); textSize(16); text("¡La cag#&te! El cliente te mira feo. Perdiste $500 pesos.", width/2, height * 0.48);
+    fill(120); textStyle(ITALIC); text("[ Presiona BARRA ESPACIO para botar la merma y seguir ]", width/2, height * 0.8);
+    return;
+  }
+
+  if (ingredienteActual > 3) { escena = 3; frameInicialEscena = frameCount; return; }
+
+  fill(255); stroke(0); strokeWeight(3); textSize(24); textStyle(BOLD);
+  text("⏳ TIEMPO: " + tiempoRestante + "s", width - 140, 45);
+
+  textSize(22); text("ESTACIÓN DE ARMADO", width/2, 45);
+  
+  textSize(16); fill(255, 234, 167); noStroke();
+  if (ingredienteActual === 1) text("PASO 1: LANZA LA VIENESA EN EL CENTRO", width/2, 80);
+  if (ingredienteActual === 2) text("PASO 2: DISTRIBUYE EL TOMATE EN CUBOS", width/2, 80);
+  if (ingredienteActual === 3) text("PASO 3: CORONA CON LA PALTA MOLIDA", width/2, 80);
+
+  fill(245, 245, 250); stroke(40); strokeWeight(4); ellipse(width/2, height * 0.45 + 20, 280, 100);
+  dibujarCompleto(width/2, height * 0.45, ingredienteActual - 1);
+  
+  barraPrecision += barraVel;
+  if (barraPrecision >= 100) { barraPrecision = 100; barraVel = -abs(barraVel); }
+  if (barraPrecision <= 0) { barraPrecision = 0; barraVel = abs(barraVel); }
+  
+  fill(255); stroke(0); strokeWeight(2); textStyle(BOLD); textSize(14); 
+  text("MEDIDOR DE PRECISIÓN", width/2, height * 0.66);
+  
+  rectMode(CORNER); stroke(40); strokeWeight(3); fill(100); rect(width/2 - 150, height * 0.7, 300, 25, 6); 
+  
+  let tamañoZonaVerde = (tipoCliente === 2) ? 44 : 72;
+  if (tieneMesonAcero) tamañoZonaVerde += 30; 
+  
+  fill(46, 204, 113); noStroke(); rect(width/2 - (tamañoZonaVerde/2), height * 0.7 + 1.5, tamañoZonaVerde, 22); 
+  
+  let posicionX = constrain(barraPrecision, 0, 100);
+  fill(231, 76, 60); stroke(255); strokeWeight(1.5);
+  rect((width/2 - 150) + (posicionX * 2.8), height * 0.7 - 5, 20, 35, 4);
+}
+// 4. ZONA SALSA (DIBUJO CON RATÓN) 
+function dibujarEscena3() {
+  if (imgSalsa) image(imgSalsa, 0, 0, width, height);
+
+  rectMode(CENTER); textAlign(CENTER, CENTER); textStyle(BOLD);
+  
+  fill(231, 76, 60); stroke(255); strokeWeight(2); textSize(24); text("⏳ " + tiempoRestante + "s", width - 140, 45);
+  textSize(18); fill(255); stroke(0); text("CONTROL DE DISPENSADORES DE SALSA", width/2, 45);
+  
+  textSize(14); fill(220); noStroke(); text("TECLAS DE ACCESO RÁPIDO:", width/2, 70);
+  
+  textSize(16); stroke(0); strokeWeight(2);
+  fill(255, 253, 220); text("Mayo [M]", width/2 - 160, 95);
+  fill(255);           text("|", width/2 - 75, 95);
+  fill(214, 48, 49);   text("Ketchup [K]", width/2, 95);
+  fill(255);           text("|", width/2 + 75, 95);
+  fill(241, 196, 15);  text("Mostaza [A]", width/2 + 160, 95);
+
+  textStyle(BOLD); fill(colorActualSalsa); stroke(40); strokeWeight(2);
+  rect(width/2, 140, 240, 30, 4); fill(40); noStroke(); textSize(14); text("LÁPIZ ACTIVADO: " + tipoSalsaActual, width/2, 140);
+
+  fill(245, 245, 250); stroke(180); strokeWeight(4); ellipse(width/2, height * 0.52 + 20, 280, 100);
+  dibujarCompleto(width/2, height * 0.52, 3);
+  
+  if (mouseIsPressed && dist(mouseX, mouseY, width/2, height * 0.52) < 55) {
+    puntosSalsaX.push(mouseX); 
+    puntosSalsaY.push(mouseY);
+    nombresSalsaDibujada.push(tipoSalsaActual); 
+    if (puntosSalsaX.length === 1 || !mouseIsPressed) {
+      trazoContinuo.push(false);
+    } else {
+      trazoContinuo.push(true);
+    }
+  }
+  
+  strokeWeight(10); noFill(); strokeJoin(ROUND);
+  for (let i = 1; i < puntosSalsaX.length; i++) {
+    if (trazoContinuo[i] && nombresSalsaDibujada[i] === nombresSalsaDibujada[i-1]) {
+      if (nombresSalsaDibujada[i] === "Mayo") stroke(255, 253, 220);
+      else if (nombresSalsaDibujada[i] === "Ketchup") stroke(214, 48, 49);
+      else if (nombresSalsaDibujada[i] === "Mostaza") stroke(241, 196, 15);
+      line(puntosSalsaX[i-1], puntosSalsaY[i-1], puntosSalsaX[i], puntosSalsaY[i]);
+    }
+  }
+  
+  fill(41, 128, 185); stroke(40); strokeWeight(2.5); rect(width / 2, height - 60, 240, 45, 8);
+  fill(255); noStroke(); textSize(15); text("¡SÍRVELO AL CLIENTE!", width / 2, height - 60);
+}
+//  5. ZONA RESULTADOS Y TIENDA 
+function dibujarEscena4() {
+  if (imgCliente) image(imgCliente, 0, 0, width, height);
+
+  dibujarPersonaje(width / 2, height * 0.22, tipoCliente);
+  
+  rectMode(CENTER); fill(255); stroke(40); strokeWeight(3); 
+  rect(width/2, height * 0.46, 520, 85, 12);
+  
+  textAlign(CENTER, CENTER); fill(40); noStroke(); textStyle(ITALIC); textSize(15); 
+  text('"' + comentarioCliente + '"', width/2, height * 0.46, 490, 75); 
+  
+  rectMode(CENTER); fill(40); rect(width/2, height * 0.59, 280, 60, 8);
+  fill(243, 156, 18); textStyle(BOLD); textSize(13);
+  text("CALIFICACIÓN: " + puntajeFinal + " PTS", width/2, height * 0.57);
+  fill(46, 204, 113); textSize(18); 
+  text("PROPINA: $" + propinaFinal, width/2, height * 0.61);
+
+  // TIENDA CON BUEN ESPACIADO
+  stroke(40); strokeWeight(2); fill(245, 245, 250);
+  rect(width/2, height * 0.79, 520, 95, 10);
+  fill(40); noStroke(); textSize(14); textStyle(BOLD); text("TUNEA TU TIENDA", width/2, height * 0.74);
+  
+  if (!tieneMesonAcero) {
+    fill(241, 196, 15); stroke(40); rect(width/2 - 120, height * 0.80, 200, 45, 6);
+    fill(40); noStroke(); textSize(11); text("Mesón de Acero [ $1500 ]\n(Zona verde + grande)", width/2 - 120, height * 0.80);
+  } else {
+    fill(180); stroke(120); rect(width/2 - 120, height * 0.80, 200, 45, 6);
+    fill(100); noStroke(); textSize(12); text("MESÓN COMPRADO", width/2 - 120, height * 0.80);
+  }
+
+  if (!tieneJunior) {
+    fill(52, 152, 219); stroke(40); rect(width/2 + 120, height * 0.80, 200, 45, 6);
+    fill(255); noStroke(); textSize(11); text("Contratar empleado [ $2000 ]\n(+5s Reloj Cocina)", width/2 + 120, height * 0.80);
+  } else {
+    fill(180); stroke(120); rect(width/2 + 120, height * 0.80, 200, 45, 6);
+    fill(100); noStroke(); textSize(12); text("EMPLEADO CONTRATADO", width/2 + 120, height * 0.80);
+  }
+
+  fill(46, 204, 113); stroke(40); rect(width/2, height - 35, 240, 40, 6);
+  fill(255); noStroke(); textSize(14); text("Siguiente Cliente ➡️", width/2, height - 35);
+}
+//  6. ZONA FIN DEL JUEGO (GAME OVER) 
+function dibujarEscenaGameOver() {
+  rectMode(CENTER); textAlign(CENTER, CENTER);
+  
+  textFont('Luckiest Guy');
+
+  fill(200, 200, 200); textStyle(BOLD); textSize(85);
+  text("TOCOMPLE", width / 2 + 4, height * 0.15 + 4); 
+  fill(235, 77, 75); text("TOCOMPLE", width / 2, height * 0.15);
+  
+  textSize(45); fill(243, 156, 18);
+  text("Simulator Chileno", width / 2, height * 0.25);
+
+  textFont('sans-serif');
+  x += velX; 
+  y += velY;
+
+  if (x + anchoComp/2 > width) { x = width - anchoComp/2; velX *= -1; estadoSimulador = (estadoSimulador + 1) % 4; }
+  if (x - anchoComp/2 < 0) { x = anchoComp/2; velX *= -1; estadoSimulador = (estadoSimulador + 1) % 4; }
+  
+  if (y + altoComp/2 > height - 150) { y = height - 150 - altoComp/2; velY *= -1; estadoSimulador = (estadoSimulador + 1) % 4; }
+  if (y - altoComp/2 < height * 0.3) { y = (height * 0.3) + altoComp/2; velY *= -1; estadoSimulador = (estadoSimulador + 1) % 4; }
+
+  dibujarCompleto(x, y, estadoSimulador);
+
+  rectMode(CENTER); fill(255, 255, 255, 220); stroke(40); strokeWeight(3);
+  rect(width/2, height * 0.52, 600, 110, 15);
+  
+  if (dineroAcumulado >= metaDinero) {
+    fill(46, 204, 113); noStroke(); textSize(34); textStyle(BOLD); text("¡EMPRESA CONSOLIDADA!", width/2, height * 0.49);
+    textSize(16); fill(40); text("Lograste juntar $" + dineroAcumulado + ". ¡Eres el rey indiscutido de los completos!", width/2, height * 0.55);
+  } else {
+    fill(231, 76, 60); noStroke(); textSize(34); textStyle(BOLD); text("¡QUEDASTE PATO!", width/2, height * 0.49);
+    textSize(16); fill(40); text("Te fuiste a la quiebra. Los completos vencidos pasaron la cuenta.", width/2, height * 0.55);
+  }
+  
+  fill(243, 156, 18); stroke(40); strokeWeight(3); rect(width/2, height - 80, 240, 50, 10);
+  fill(255); noStroke(); textStyle(BOLD); textSize(15); text("VOLVER A EMPEZAR", width/2, height - 80);
+}
+//  7. DISEÑOS BASE Y MOTOR GRÁFICO 
+function dibujarCompleto(cx, cy, nivel) {
+  rectMode(CENTER);
+  stroke(40); strokeWeight(2.5); fill(200, 130, 60); rect(cx, cy + 3, anchoComp, altoComp, 22); 
+  fill(235, 175, 105); rect(cx, cy, anchoComp, altoComp, 22); 
+  noStroke(); fill(170, 110, 50); rect(cx, cy, anchoComp - 15, 16, 5);
+
+  if (nivel >= 1) {
+    stroke(40); strokeWeight(2); fill(165, 55, 55); rect(cx, cy, anchoComp + 12, 18, 9);
+    fill(195, 75, 75); noStroke(); rect(cx, cy - 2, anchoComp + 6, 6, 3);
+  }
+  if (nivel >= 2) {
+    stroke(40); fill(235, 47, 6);
+    rect(cx - 35, cy - 2, 18, 16, 4); rect(cx - 10, cy + 1, 19, 17, 4);
+    rect(cx + 15, cy - 3, 17, 15, 4); rect(cx + 40, cy + 2, 18, 16, 4);
+  }
+  if (nivel >= 3) {
+    stroke(40); strokeWeight(2.5); fill(75, 155, 55); rect(cx, cy, anchoComp - 6, 14, 8);
+    fill(105, 185, 75); noStroke(); rect(cx, cy - 2, anchoComp - 12, 6, 4); 
+  }
+}
+
+function dibujarPersonaje(px, py, tipo) {
+  stroke(40); strokeWeight(3); 
+  if (tipo === 0) fill(52, 152, 219); 
+  else if (tipo === 1) fill(155, 89, 182); 
+  else fill(45, 52, 54); 
+  
+  quad(px - 60, py + 80, px + 60, py + 80, px + 45, py + 35, px - 45, py + 35); 
+  fill(255); rect(px, py + 60, 45, 40); 
+  
+  stroke(40); fill(245, 205, 160);
+  ellipse(px - 42, py + 5, 14, 20); ellipse(px + 42, py + 5, 14, 20); 
+  ellipse(px, py, 85, 90); 
+
+  fill(40); ellipse(px - 18, py - 10, 9, 9); ellipse(px + 18, py - 10, 9, 9); 
+  
+  stroke(40); strokeWeight(2.5); noFill();
+  arc(px, py + 22, 22, 12, 0, PI); 
+  
+  if (tipo === 0) { 
+    fill(74, 50, 28); noStroke(); arc(px, py - 30, 81, 45, PI, 0); 
+  } else if (tipo === 1) { 
+    fill(220); stroke(40); ellipse(px, py - 45, 35, 35);
+  } else { 
+    noFill(); stroke(40); strokeWeight(3);
+    ellipse(px - 18, py - 10, 22, 22); ellipse(px + 18, py - 10, 22, 22);
+    line(px - 7, py - 10, px + 7, py - 10);
+  }
+}
+
+function calcularResultados() {
+  if (tiempoRestante <= 0) return;
+
+  let cantidadTrazos = puntosSalsaX.length;
+  let puntosBase = constrain(map(cantidadTrazos, 25, 140, 40, 100), 40, 100);
+  
+  let aciertosSalsa = 0;
+  for (let i = 0; i < nombresSalsaDibujada.length; i++) {
+    if (nombresSalsaDibujada[i] === pedidoSalsa) aciertosSalsa++;
+  }
+  
+  let ratioSalsaCorrecta = nombresSalsaDibujada.length > 0 ? aciertosSalsa / nombresSalsaDibujada.length : 0;
+  
+  if (ratioSalsaCorrecta < 0.6) {
+    puntajeFinal = 20;
+    comentarioCliente = "¡QUE ES ESTA W#$! Te pedí explícitamente " + pedidoSalsa.toUpperCase() + " y me pusiste lo que quisiste";
+    propinaFinal = 0;
+    dineroAcumulado -= 300; 
+    return;
+  }
+
+  textStyle(BOLD);
+  puntajeFinal = int(puntosBase);
+  let multiplicadorCliente = (tipoCliente === 2) ? 2.5 : 1.0; 
+
+  if (puntajeFinal >= 85) {
+    comentarioCliente = "¡La raja! Se nota que usaste el dispensador correcto de " + pedidoSalsa.toUpperCase() + ". Quedó de pana";
+    propinaFinal = int(1200 * multiplicadorCliente);
+  } else if (puntajeFinal >= 60) {
+    comentarioCliente = "Está piola, el " + pedidoSalsa.toUpperCase() + " tiene buen sabor pero pudiste haberle puesto un poco más de empeño al zigzag.";
+    propinaFinal = int(500 * multiplicadorCliente);
+  } else {
+    comentarioCliente = "Bastante cagao con la salsa " + pedidoSalsa.toUpperCase() + ". Está más seco que escupo de momia.";
+    propinaFinal = int(100 * multiplicadorCliente);
+  }
+
+  dineroAcumulado += propinaFinal + 2000; 
+}
+// 8. EVENTOS DE CONTROL (SISTEMA) 
+function keyPressed() {
+  if (key === 'm' || key === 'M') { colorActualSalsa = color(255, 253, 220); tipoSalsaActual = "Mayo"; }
+  if (key === 'k' || key === 'K') { colorActualSalsa = color(214, 48, 49); tipoSalsaActual = "Ketchup"; }
+  if (key === 'a' || key === 'A') { colorActualSalsa = color(241, 196, 15); tipoSalsaActual = "Mostaza"; }
+
+  if (escena === 2 && completoCaido && key === ' ') { 
+    dineroAcumulado -= 500; 
+    if (dineroAcumulado < 0) escena = 5; 
+    else resetearMesaParaSiguienteCliente(); 
+    return; 
+  }
+  
+  if (escena === 2 && ingredienteActual <= 3 && key === ' ') {
+    let limiteMin = (tipoCliente === 2) ? 43 : 38;
+    let limiteMax = (tipoCliente === 2) ? 57 : 62;
+    
+    if (tieneMesonAcero) {
+      limiteMin -= 15; 
+      limiteMax += 15;
+    }
+    
+    if (barraPrecision < limiteMin || barraPrecision > limiteMax) {
+      completoCaido = true;
+    } else {
+      ingredienteActual++;
+      barraPrecision = 0; 
+    }
+  }
+}
+
+function mousePressed() {
+  if (escena === 0 && dist(mouseX, mouseY, width/2, height-80) < 150) { escena = 1; }
+  else if (escena === 1 && dist(mouseX, mouseY, width/2, height-60) < 120) { escena = 2; frameInicialEscena = frameCount; }
+  else if (escena === 3 && dist(mouseX, mouseY, width/2, height-60) < 120) { calcularResultados(); escena = 4; }
+  
+  else if (escena === 4) {
+    if (mouseX > width/2 - 220 && mouseX < width/2 - 20 && mouseY > height*0.80 - 22 && mouseY < height*0.80 + 22) {
+      if (!tieneMesonAcero && dineroAcumulado >= 1500) { dineroAcumulado -= 1500; tieneMesonAcero = true; }
+    }
+    else if (mouseX > width/2 + 20 && mouseX < width/2 + 220 && mouseY > height*0.80 - 22 && mouseY < height*0.80 + 22) {
+      if (!tieneJunior && dineroAcumulado >= 2000) { dineroAcumulado -= 2000; tieneJunior = true; }
+    }
+    else if (mouseX > width/2 - 120 && mouseX < width/2 + 120 && mouseY > (height - 35) - 20 && mouseY < (height - 35) + 20) { 
+      if (dineroAcumulado >= metaDinero || dineroAcumulado < 0) {
+        escena = 5; 
+      } else {
+        resetearMesaParaSiguienteCliente(); 
+      }
+    }
+  }
+  
+  else if (escena === 5 && dist(mouseX, mouseY, width/2, height-80) < 120) { 
+    dineroAcumulado = 0; 
+    tieneJunior = false; 
+    tieneMesonAcero = false; 
+    resetearMesaParaSiguienteCliente(); 
+  }
+}
+
+function resetearMesaParaSiguienteCliente() {
+  escena = 1; ingredienteActual = 1; completoCaido = false; barraPrecision = 0;
+  puntosSalsaX = []; puntosSalsaY = []; nombresSalsaDibujada = []; trazoContinuo = [];
+  seleccionarNuevoCliente();
+}
+
+function windowResized() { resizeCanvas(windowWidth, windowHeight); }
